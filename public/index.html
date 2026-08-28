@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SALLEO — UAM</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ÉCRAN AUTHENTIFICATION -->
+<div id="authScreen" class="auth-wrapper">
+    <div class="auth-card">
+        <h1>SALLEO</h1>
+        <p class="subtitle">Réservation des salles — Université Amadou Mahtar Mbow</p>
+
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tabLogin">Connexion</button>
+            <button class="auth-tab" id="tabRegister">Inscription</button>
+        </div>
+
+        <p id="authMsg" class="msg hidden"></p>
+
+        <form id="loginForm">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="loginEmail" required placeholder="prenom.nom@uam.sn">
+            </div>
+            <div class="field">
+                <label>Mot de passe</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </form>
+
+        <form id="registerForm" class="hidden">
+            <div class="field">
+                <label>Nom complet</label>
+                <input type="text" id="registerNom" required placeholder="Ramatoulaye Dia">
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="registerEmail" required placeholder="prenom.nom@uam.sn">
+            </div>
+            <div class="field">
+                <label>Mot de passe</label>
+                <input type="password" id="registerPassword" required minlength="4">
+            </div>
+            <div class="field">
+                <label>Statut</label>
+                <select id="registerRole" required>
+                    <option value="etudiant">Étudiant</option>
+                    <option value="enseignant">Enseignant</option>
+                    <option value="administratif">Personnel administratif</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Créer mon compte</button>
+        </form>
+    </div>
+</div>
+
+<!-- APPLICATION -->
+<div id="appScreen" class="hidden">
+    <header class="hero">
+        <div class="hero-inner">
+            <div>
+                <p class="eyebrow">UAM · Diamniadio</p>
+                <h1>SALLEO</h1>
+                <p>Réservation des salles de l'université</p>
+            </div>
+            <div class="user-badge">
+                <span id="userNom"></span>
+                <button id="logoutBtn" class="btn btn-outline" style="background:white;">Déconnexion</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Salles disponibles</div>
+                <div class="value" id="statDispo">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Mes réservations en attente</div>
+                <div class="value" id="statAttente">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Mes réservations validées</div>
+                <div class="value" id="statValidees">0</div>
+            </div>
+        </section>
+
+        <div class="layout">
+            <div class="panel">
+                <h2>Réserver une salle</h2>
+                <p id="formMsg" class="msg hidden"></p>
+                <form id="reservationForm">
+                    <div class="field">
+                        <label>Salle</label>
+                        <select id="salleSelect" required></select>
+                    </div>
+                    <div class="field">
+                        <label>Date</label>
+                        <input type="date" id="dateInput" required>
+                    </div>
+                    <div class="field" style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label>Début</label>
+                            <input type="time" id="heureDebutInput" required>
+                        </div>
+                        <div style="flex:1;">
+                            <label>Fin</label>
+                            <input type="time" id="heureFinInput" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Motif</label>
+                        <input type="text" id="motifInput" required placeholder="Réunion de groupe">
+                    </div>
+                    <button type="submit" class="btn btn-gold" style="width:100%;">Envoyer la demande</button>
+                </form>
+            </div>
+
+            <div class="panel">
+                <div class="tabs">
+                    <button class="tab-btn active" id="tabSalles">Salles disponibles</button>
+                    <button class="tab-btn" id="tabMesReservations">Mes réservations</button>
+                </div>
+
+                <div id="sallesView">
+                    <div class="toolbar">
+                        <input type="search" id="searchInput" placeholder="Rechercher une salle...">
+                        <select id="typeFilter">
+                            <option value="all">Tous les types</option>
+                            <option value="salle_de_classe">Salle de classe</option>
+                            <option value="amphitheatre">Amphithéâtre</option>
+                            <option value="salle_de_reunion">Salle de réunion</option>
+                            <option value="laboratoire">Laboratoire</option>
+                        </select>
+                    </div>
+                    <div id="salleGrid" class="salle-grid"></div>
+                </div>
+
+                <div id="mesReservationsView" class="hidden">
+                    <div id="mesReservationsList"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
