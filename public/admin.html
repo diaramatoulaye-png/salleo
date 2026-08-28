@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SALLEO — Administration UAM</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="authScreen" class="auth-wrapper">
+    <div class="auth-card">
+        <h1>SALLEO Admin</h1>
+        <p class="subtitle">Accès réservé au personnel administratif — UAM</p>
+        <p id="authMsg" class="msg hidden"></p>
+        <form id="loginForm">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="loginEmail" required>
+            </div>
+            <div class="field">
+                <label>Mot de passe</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </form>
+    </div>
+</div>
+
+<div id="appScreen" class="hidden">
+    <header class="hero">
+        <div class="hero-inner">
+            <div>
+                <p class="eyebrow">UAM · Diamniadio</p>
+                <h1>SALLEO — Administration</h1>
+                <p>Gestion des réservations et du parc de salles</p>
+            </div>
+            <div class="user-badge">
+                <span id="userNom"></span>
+                <button id="logoutBtn" class="btn btn-outline" style="background:white;">Déconnexion</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="label">En attente</div>
+                <div class="value" id="statAttente">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Validées</div>
+                <div class="value" id="statValidees">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Refusées</div>
+                <div class="value" id="statRefusees">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Salles au total</div>
+                <div class="value" id="statSalles">0</div>
+            </div>
+        </section>
+
+        <div class="layout">
+            <div class="panel">
+                <h2>Réservations</h2>
+                <div class="toolbar">
+                    <select id="statutFilter">
+                        <option value="all">Toutes</option>
+                        <option value="en_attente">En attente</option>
+                        <option value="validee">Validées</option>
+                        <option value="refusee">Refusées</option>
+                    </select>
+                </div>
+                <div id="reservationList"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Ajouter une salle</h2>
+                <p id="salleMsg" class="msg hidden"></p>
+                <form id="salleForm">
+                    <div class="field">
+                        <label>Nom</label>
+                        <input type="text" id="nomInput" required>
+                    </div>
+                    <div class="field">
+                        <label>Type</label>
+                        <select id="typeInput" required>
+                            <option value="salle_de_classe">Salle de classe</option>
+                            <option value="amphitheatre">Amphithéâtre</option>
+                            <option value="salle_de_reunion">Salle de réunion</option>
+                            <option value="laboratoire">Laboratoire</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Bâtiment</label>
+                        <input type="text" id="batimentInput" required>
+                    </div>
+                    <div class="field">
+                        <label>Capacité</label>
+                        <input type="number" id="capaciteInput" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-gold" style="width:100%;">Ajouter la salle</button>
+                </form>
+
+                <h2 style="margin-top:24px;">Parc de salles</h2>
+                <div id="salleAdminList"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
