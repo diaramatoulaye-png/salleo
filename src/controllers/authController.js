@@ -20,17 +20,21 @@ const genererTokens = (user) => {
 
 const register = async (req, res, next) => {
     try {
-        const { nom, email, motDePasse, role } = req.body;
+        const { nom, email, motDePasse, role, departement } = req.body;
 
         if (!nom || !email || !motDePasse || !role) {
             return res.status(400).json({ message: "Tous les champs sont obligatoires." });
         }
 
         // Inscription publique réservée aux étudiants et enseignants.
-        // Les comptes administratif/admin sont créés directement en base (voir src/db/seedAdmin.js).
+        // administratif, responsable_departement et admin sont créés directement en base (src/db/seedAdmin.js).
         const rolesValides = ["etudiant", "enseignant"];
         if (!rolesValides.includes(role)) {
             return res.status(400).json({ message: "Rôle invalide." });
+        }
+
+        if (!departement || !departement.trim()) {
+            return res.status(400).json({ message: "Le département / filière est obligatoire." });
         }
 
         const utilisateurExistant = await findUserByEmail(email);
@@ -39,7 +43,13 @@ const register = async (req, res, next) => {
         }
 
         const motDePasseHash = await bcrypt.hash(motDePasse, 10);
-        const nouvelUtilisateur = await createUser({ nom, email, motDePasseHash, role });
+        const nouvelUtilisateur = await createUser({
+            nom,
+            email,
+            motDePasseHash,
+            role,
+            departement: departement.trim()
+        });
 
         const { accessToken, refreshToken } = genererTokens(nouvelUtilisateur);
 
@@ -74,7 +84,8 @@ const login = async (req, res, next) => {
                 id: utilisateur.id,
                 nom: utilisateur.nom,
                 email: utilisateur.email,
-                role: utilisateur.role
+                role: utilisateur.role,
+                departement: utilisateur.departement
             },
             accessToken,
             refreshToken

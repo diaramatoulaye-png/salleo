@@ -79,6 +79,7 @@ tabRegister.addEventListener("click", () => {
 const showAuthMsg = (texte, type) => {
     authMsg.textContent = texte;
     authMsg.className = `msg ${type === "error" ? "msg-error" : "msg-success"}`;
+    authMsg.classList.remove("hidden");
 };
 
 loginForm.addEventListener("submit", async (event) => {
@@ -115,12 +116,13 @@ registerForm.addEventListener("submit", async (event) => {
     const email = document.querySelector("#registerEmail").value.trim();
     const motDePasse = document.querySelector("#registerPassword").value;
     const role = document.querySelector("#registerRole").value;
+    const departement = document.querySelector("#registerDepartement").value.trim();
 
     try {
         const response = await fetch(`${API_URL}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nom, email, motDePasse, role })
+            body: JSON.stringify({ nom, email, motDePasse, role, departement })
         });
         const data = await response.json();
 

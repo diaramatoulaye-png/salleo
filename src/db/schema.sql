@@ -1,17 +1,15 @@
--- Extension pour les UUID
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Table des utilisateurs
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nom VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
     mot_de_passe VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('etudiant', 'enseignant', 'administratif', 'admin')),
+    role VARCHAR(30) NOT NULL CHECK (role IN ('etudiant', 'enseignant', 'administratif', 'responsable_departement', 'admin')),
+    departement VARCHAR(100),
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- Table des salles
 CREATE TABLE IF NOT EXISTS salles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nom VARCHAR(100) NOT NULL,
@@ -23,7 +21,6 @@ CREATE TABLE IF NOT EXISTS salles (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
--- Table des réservations
 CREATE TABLE IF NOT EXISTS reservations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     salle_id UUID NOT NULL REFERENCES salles(id) ON DELETE CASCADE,
@@ -37,6 +34,6 @@ CREATE TABLE IF NOT EXISTS reservations (
     CONSTRAINT heure_valide CHECK (heure_fin > heure_debut)
 );
 
--- Index pour accélérer la détection de conflits de créneaux
 CREATE INDEX IF NOT EXISTS idx_reservations_salle_date ON reservations(salle_id, date_reservation);
 CREATE INDEX IF NOT EXISTS idx_reservations_user ON reservations(user_id);
+CREATE INDEX IF NOT EXISTS idx_users_departement ON users(departement);

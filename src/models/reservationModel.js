@@ -2,7 +2,7 @@ const pool = require("../config/db");
 
 const getAllReservations = async () => {
     const query = `
-        SELECT r.*, s.nom AS salle_nom, u.nom AS user_nom
+        SELECT r.*, s.nom AS salle_nom, u.nom AS user_nom, u.departement AS user_departement
         FROM reservations r
         JOIN salles s ON s.id = r.salle_id
         JOIN users u ON u.id = r.user_id
@@ -24,14 +24,27 @@ const getReservationsByUser = async (userId) => {
     return rows;
 };
 
+// Vue en lecture seule pour le responsable de département :
+// toutes les réservations faites par des utilisateurs de son propre département
+const getReservationsByDepartement = async (departement) => {
+    const query = `
+        SELECT r.*, s.nom AS salle_nom, s.batiment, u.nom AS user_nom, u.role AS user_role
+        FROM reservations r
+        JOIN salles s ON s.id = r.salle_id
+        JOIN users u ON u.id = r.user_id
+        WHERE u.departement = $1
+        ORDER BY r.date_reservation DESC, r.heure_debut ASC
+    `;
+    const { rows } = await pool.query(query, [departement]);
+    return rows;
+};
+
 const getReservationById = async (id) => {
     const query = `SELECT * FROM reservations WHERE id = $1`;
     const { rows } = await pool.query(query, [id]);
     return rows[0];
 };
 
-// Coeur de la logique métier : vérifie qu'aucune réservation active
-// (en_attente ou validee) ne chevauche le créneau demandé sur la même salle
 const existeConflit = async (salleId, date, heureDebut, heureFin, excludeId = null) => {
     const query = `
         SELECT 1 FROM reservations
@@ -81,6 +94,7 @@ const deleteReservation = async (id) => {
 module.exports = {
     getAllReservations,
     getReservationsByUser,
+    getReservationsByDepartement,
     getReservationById,
     existeConflit,
     createReservation,

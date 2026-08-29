@@ -1,6 +1,7 @@
 const {
     getAllReservations,
     getReservationsByUser,
+    getReservationsByDepartement,
     getReservationById,
     existeConflit,
     createReservation,
@@ -9,6 +10,7 @@ const {
 } = require("../models/reservationModel");
 
 const { getSalleById } = require("../models/salleModel");
+const { findUserById } = require("../models/userModel");
 
 const listerReservations = async (req, res, next) => {
     try {
@@ -29,6 +31,22 @@ const mesReservations = async (req, res, next) => {
     try {
         const reservations = await getReservationsByUser(req.user.id);
         res.status(200).json(reservations);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Réservé au rôle responsable_departement : vue en lecture seule de son propre département
+const reservationsDeMonDepartement = async (req, res, next) => {
+    try {
+        const utilisateur = await findUserById(req.user.id);
+
+        if (!utilisateur.departement) {
+            return res.status(400).json({ message: "Aucun département associé à ce compte." });
+        }
+
+        const reservations = await getReservationsByDepartement(utilisateur.departement);
+        res.status(200).json({ departement: utilisateur.departement, reservations });
     } catch (error) {
         next(error);
     }
@@ -83,8 +101,6 @@ const validerReservation = async (req, res, next) => {
             return res.status(404).json({ message: "Réservation introuvable." });
         }
 
-        // Re-vérification du conflit au moment de la validation,
-        // au cas où une autre réservation aurait été validée entre-temps
         const conflit = await existeConflit(
             reservation.salle_id,
             reservation.date_reservation,
@@ -141,6 +157,7 @@ const annulerReservation = async (req, res, next) => {
 module.exports = {
     listerReservations,
     mesReservations,
+    reservationsDeMonDepartement,
     creerReservation,
     validerReservation,
     refuserReservation,

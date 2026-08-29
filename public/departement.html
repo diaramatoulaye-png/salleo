@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SALLEO — Vue Département</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="authScreen" class="auth-wrapper">
+    <div class="auth-card">
+        <h1>SALLEO</h1>
+        <p class="subtitle">Vue responsable de département — UAM</p>
+        <p id="authMsg" class="msg hidden"></p>
+        <form id="loginForm">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="loginEmail" required>
+            </div>
+            <div class="field">
+                <label>Mot de passe</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </form>
+    </div>
+</div>
+
+<div id="appScreen" class="hidden">
+    <header class="hero">
+        <div class="hero-inner">
+            <div>
+                <p class="eyebrow">UAM · Diamniadio</p>
+                <h1>SALLEO — Vue Département</h1>
+                <p id="departementLabel">Chargement...</p>
+            </div>
+            <div class="user-badge">
+                <span id="userNom"></span>
+                <button id="logoutBtn" class="btn btn-outline" style="background:white;">Déconnexion</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Total réservations</div>
+                <div class="value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">En attente</div>
+                <div class="value" id="statAttente">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Validées</div>
+                <div class="value" id="statValidees">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Refusées</div>
+                <div class="value" id="statRefusees">0</div>
+            </div>
+        </section>
+
+        <div class="panel">
+            <h2>Réservations de mon département (lecture seule)</h2>
+            <div id="reservationList"></div>
+        </div>
+    </main>
+</div>
+
+<script src="departement.js"></script>
+</body>
+</html>
