@@ -1,13 +1,14 @@
 :root {
-    --uam-green: #0b6e4f;
-    --uam-green-dark: #08533b;
-    --uam-gold: #d4a017;
-    --uam-gold-light: #f4d772;
-    --bg: #f7f9f7;
-    --text: #1f2b24;
-    --muted: #5c6b62;
+    --uam-blue: #1CA3D9;
+    --uam-blue-dark: #12799f;
+    --uam-terracotta: #A65A42;
+    --uam-terracotta-dark: #7d4330;
+    --uam-terracotta-light: #c98a72;
+    --bg: #f7f7f5;
+    --text: #2b2420;
+    --muted: #6b6058;
     --card: #ffffff;
-    --border: #e2e8e4;
+    --border: #e6e1db;
 }
 
 * { box-sizing: border-box; }
@@ -27,7 +28,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(11,110,79,0.85) 0%, rgba(8,83,59,0.9) 100%),
+    background: linear-gradient(135deg, rgba(18,121,159,0.55) 0%, rgba(18,121,159,0.35) 100%),
                 url("images/campus-uam.png") center/cover no-repeat;
     padding: 20px;
 }
@@ -44,7 +45,7 @@ body {
 .auth-card h1 {
     margin: 0 0 4px 0;
     font-size: 24px;
-    color: var(--uam-green-dark);
+    color: var(--uam-blue-dark);
 }
 
 .auth-card p.subtitle {
@@ -75,7 +76,7 @@ body {
 }
 
 .auth-tab.active {
-    background: var(--uam-green);
+    background: var(--uam-blue);
     color: white;
 }
 
@@ -99,7 +100,7 @@ body {
 }
 
 .field input:focus, .field select:focus {
-    border-color: var(--uam-green);
+    border-color: var(--uam-blue);
 }
 
 .btn {
@@ -112,16 +113,16 @@ body {
     font-size: 14px;
 }
 
-.btn-primary { background: var(--uam-green); color: white; width: 100%; }
-.btn-primary:hover { background: var(--uam-green-dark); }
+.btn-primary { background: var(--uam-blue); color: white; width: 100%; }
+.btn-primary:hover { background: var(--uam-blue-dark); }
 
-.btn-gold { background: var(--uam-gold); color: #3a2c00; }
-.btn-gold:hover { background: var(--uam-gold-light); }
+.btn-gold { background: var(--uam-terracotta); color: white; }
+.btn-gold:hover { background: var(--uam-terracotta-dark); }
 
 .btn-outline {
     background: transparent;
-    border: 2px solid var(--uam-green);
-    color: var(--uam-green);
+    border: 2px solid var(--uam-blue);
+    color: var(--uam-blue);
 }
 
 .btn-danger { background: #d64545; color: white; }
@@ -135,12 +136,12 @@ body {
     margin-bottom: 14px;
 }
 .msg-error { background: #fdeaea; color: #b93a3a; }
-.msg-success { background: #e8f5ee; color: var(--uam-green-dark); }
+.msg-success { background: #e7f3f9; color: var(--uam-blue-dark); }
 
 /* ---------- App shell ---------- */
 .hero {
     position: relative;
-    background: linear-gradient(135deg, rgba(11,110,79,0.92) 0%, rgba(8,83,59,0.92) 100%),
+    background: linear-gradient(135deg, rgba(18,121,159,0.55) 0%, rgba(18,121,159,0.35) 100%),
                 url("images/campus-uam.png") center/cover no-repeat;
     color: white;
     padding: 40px 24px;
@@ -160,13 +161,13 @@ body {
     text-transform: uppercase;
     letter-spacing: 2px;
     font-size: 12px;
-    color: var(--uam-gold-light);
+    color: var(--uam-terracotta-light);
     font-weight: 700;
     margin: 0 0 6px 0;
 }
 
 .hero h1 { margin: 0; font-size: 28px; }
-.hero p { margin: 6px 0 0 0; color: #dff0e6; }
+.hero p { margin: 6px 0 0 0; color: #eaf6fb; }
 
 .user-badge {
     background: rgba(255,255,255,0.15);
@@ -195,12 +196,12 @@ main {
     background: var(--card);
     border-radius: 12px;
     padding: 16px 18px;
-    border-top: 3px solid var(--uam-gold);
+    border-top: 3px solid var(--uam-terracotta);
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .stat-card .label { font-size: 12px; color: var(--muted); font-weight: 600; }
-.stat-card .value { font-size: 26px; font-weight: 800; color: var(--uam-green-dark); margin-top: 4px; }
+.stat-card .value { font-size: 26px; font-weight: 800; color: var(--uam-blue-dark); margin-top: 4px; }
 
 .layout {
     display: grid;
@@ -222,8 +223,8 @@ main {
 .panel h2 {
     margin: 0 0 16px 0;
     font-size: 17px;
-    color: var(--uam-green-dark);
-    border-bottom: 2px solid var(--uam-gold-light);
+    color: var(--uam-blue-dark);
+    border-bottom: 2px solid var(--uam-terracotta-light);
     padding-bottom: 8px;
 }
 
@@ -259,8 +260,8 @@ main {
 }
 
 .tab-btn.active {
-    border-color: var(--uam-green);
-    background: var(--uam-green);
+    border-color: var(--uam-blue);
+    background: var(--uam-blue);
     color: white;
 }
 
@@ -277,9 +278,9 @@ main {
     transition: border-color 0.15s;
 }
 
-.salle-card:hover { border-color: var(--uam-gold); }
+.salle-card:hover { border-color: var(--uam-terracotta); }
 
-.salle-card .type { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--uam-green); letter-spacing: 0.5px; }
+.salle-card .type { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--uam-blue); letter-spacing: 0.5px; }
 .salle-card h3 { margin: 4px 0; font-size: 16px; }
 .salle-card .infos { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
 
@@ -291,7 +292,7 @@ main {
     font-weight: 700;
 }
 .badge-attente { background: #fdf3d8; color: #8a6a00; }
-.badge-validee { background: #e2f4ea; color: var(--uam-green-dark); }
+.badge-validee { background: #e7f3f9; color: var(--uam-blue-dark); }
 .badge-refusee { background: #fdeaea; color: #b93a3a; }
 
 .reservation-row {

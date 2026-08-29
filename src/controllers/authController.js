@@ -26,7 +26,9 @@ const register = async (req, res, next) => {
             return res.status(400).json({ message: "Tous les champs sont obligatoires." });
         }
 
-        const rolesValides = ["etudiant", "enseignant", "administratif", "admin"];
+        // Inscription publique réservée aux étudiants et enseignants.
+        // Les comptes administratif/admin sont créés directement en base (voir src/db/seedAdmin.js).
+        const rolesValides = ["etudiant", "enseignant"];
         if (!rolesValides.includes(role)) {
             return res.status(400).json({ message: "Rôle invalide." });
         }
