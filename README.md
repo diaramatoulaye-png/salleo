@@ -66,6 +66,9 @@ createdb salleo
 # 4. Lancer la migration (création des tables)
 npm run migrate
 
+# 4bis. Insérer un jeu de salles de démonstration
+psql -h localhost -U postgres -d salleo -f src/db/seedSalles.sql
+
 # 5. Créer un compte administratif (aucune inscription publique pour ce rôle)
 node src/db/seedAdmin.js "Nom Complet" admin@uam.sn motdepasse administratif
 
