@@ -184,6 +184,53 @@
     </main>
 </div>
 
+<!-- Modale : disponibilités d'une salle -->
+<div id="dispoModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;">
+    <div style="background:var(--card); border-radius:14px; padding:24px; width:100%; max-width:480px; max-height:80vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 id="dispoModalTitle" style="margin:0; font-size:16px; color:var(--uam-blue-dark);">Disponibilités</h2>
+            <button type="button" id="dispoModalClose" class="btn btn-outline" style="padding:4px 10px;">Fermer</button>
+        </div>
+        <div id="dispoModalContent"></div>
+    </div>
+</div>
+
+<!-- Modale : modification d'une réservation en attente -->
+<div id="modifierModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;">
+    <div style="background:var(--card); border-radius:14px; padding:24px; width:100%; max-width:420px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h2 style="margin:0; font-size:16px; color:var(--uam-blue-dark);">Modifier la réservation</h2>
+            <button type="button" id="modifierModalClose" class="btn btn-outline" style="padding:4px 10px;">Fermer</button>
+        </div>
+        <p id="modifierMsg" class="msg hidden"></p>
+        <form id="modifierForm">
+            <div class="field">
+                <label>Effectif</label>
+                <input type="number" id="modifierEffectif" min="1">
+            </div>
+            <div class="field">
+                <label>Date</label>
+                <input type="date" id="modifierDate" required>
+            </div>
+            <div class="field" style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label>Début</label>
+                    <input type="time" id="modifierHeureDebut" required>
+                </div>
+                <div style="flex:1;">
+                    <label>Fin</label>
+                    <input type="time" id="modifierHeureFin" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>Motif</label>
+                <input type="text" id="modifierMotif" required>
+            </div>
+            <button type="submit" class="btn btn-gold" style="width:100%;">Enregistrer</button>
+        </form>
+    </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>
