@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
     mot_de_passe VARCHAR(255) NOT NULL,
     role VARCHAR(30) NOT NULL CHECK (role IN ('etudiant', 'enseignant', 'administratif', 'responsable_departement', 'admin')),
     departement VARCHAR(100),
+    classe VARCHAR(50),
+    est_responsable_classe BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -29,6 +31,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     heure_debut TIME NOT NULL,
     heure_fin TIME NOT NULL,
     motif VARCHAR(255) NOT NULL,
+    effectif INTEGER,
     statut VARCHAR(20) NOT NULL DEFAULT 'en_attente' CHECK (statut IN ('en_attente', 'validee', 'refusee')),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT heure_valide CHECK (heure_fin > heure_debut)

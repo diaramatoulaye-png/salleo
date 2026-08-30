@@ -64,13 +64,21 @@ const existeConflit = async (salleId, date, heureDebut, heureFin, excludeId = nu
     return rows.length > 0;
 };
 
-const createReservation = async ({ salleId, userId, date, heureDebut, heureFin, motif }) => {
+const createReservation = async ({ salleId, userId, date, heureDebut, heureFin, motif, effectif }) => {
     const query = `
-        INSERT INTO reservations (salle_id, user_id, date_reservation, heure_debut, heure_fin, motif)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO reservations (salle_id, user_id, date_reservation, heure_debut, heure_fin, motif, effectif)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
     `;
-    const { rows } = await pool.query(query, [salleId, userId, date, heureDebut, heureFin, motif]);
+    const { rows } = await pool.query(query, [
+        salleId,
+        userId,
+        date,
+        heureDebut,
+        heureFin,
+        motif,
+        effectif || null
+    ]);
     return rows[0];
 };
 
