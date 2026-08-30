@@ -40,9 +40,27 @@ const typeFilter = document.querySelector("#typeFilter");
 const salleGrid = document.querySelector("#salleGrid");
 const mesReservationsList = document.querySelector("#mesReservationsList");
 
+// Modale disponibilités
+const dispoModal = document.querySelector("#dispoModal");
+const dispoModalTitle = document.querySelector("#dispoModalTitle");
+const dispoModalContent = document.querySelector("#dispoModalContent");
+const dispoModalClose = document.querySelector("#dispoModalClose");
+
+// Modale modification de réservation
+const modifierModal = document.querySelector("#modifierModal");
+const modifierModalClose = document.querySelector("#modifierModalClose");
+const modifierForm = document.querySelector("#modifierForm");
+const modifierMsg = document.querySelector("#modifierMsg");
+const modifierEffectif = document.querySelector("#modifierEffectif");
+const modifierDate = document.querySelector("#modifierDate");
+const modifierHeureDebut = document.querySelector("#modifierHeureDebut");
+const modifierHeureFin = document.querySelector("#modifierHeureFin");
+const modifierMotif = document.querySelector("#modifierMotif");
+
 let salles = [];
 let mesReservations = [];
 let currentUser = null;
+let reservationEnCoursDeModif = null;
 
 // ---------- Auth : gestion du token ----------
 const getToken = () => localStorage.getItem("salleo_token");
@@ -256,6 +274,57 @@ effectifInput.addEventListener("input", renderSalleSelect);
 
 const formatType = (type) => type.replaceAll("_", " ").replace(/^./, (l) => l.toUpperCase());
 
+const formatDateFr = (isoDate) => {
+    const [annee, mois, jour] = isoDate.split("-");
+    return `${jour}/${mois}/${annee}`;
+};
+
+const badgeClasse = (statut) => {
+    if (statut === "validee") return "badge-validee";
+    if (statut === "refusee") return "badge-refusee";
+    return "badge-attente";
+};
+
+// ---------- Modale : créneaux occupés d'une salle ----------
+const fermerDispoModal = () => dispoModal.classList.add("hidden");
+dispoModalClose.addEventListener("click", fermerDispoModal);
+dispoModal.addEventListener("click", (event) => {
+    if (event.target === dispoModal) fermerDispoModal();
+});
+
+const ouvrirDisponibilites = async (salle) => {
+    dispoModalTitle.textContent = `Créneaux occupés — ${salle.nom}`;
+    dispoModalContent.innerHTML = `<div class="empty-state">Chargement...</div>`;
+    dispoModal.classList.remove("hidden");
+
+    try {
+        const response = await authFetch(`${API_URL}/reservations/salle/${salle.id}`);
+        const creneaux = await response.json();
+
+        if (!response.ok) {
+            dispoModalContent.innerHTML = `<div class="msg msg-error">${creneaux.message || "Impossible de charger les disponibilités."}</div>`;
+            return;
+        }
+
+        if (creneaux.length === 0) {
+            dispoModalContent.innerHTML = `<div class="empty-state">Aucun créneau occupé à venir pour cette salle.</div>`;
+            return;
+        }
+
+        dispoModalContent.innerHTML = creneaux.map((creneau) => `
+            <div class="reservation-row">
+                <div>
+                    <strong>${formatDateFr(creneau.date_reservation)}</strong>
+                    <div class="details">${creneau.heure_debut.slice(0, 5)} - ${creneau.heure_fin.slice(0, 5)}</div>
+                    <span class="badge ${badgeClasse(creneau.statut)}">${creneau.statut.replace("_", " ")}</span>
+                </div>
+            </div>
+        `).join("");
+    } catch (error) {
+        dispoModalContent.innerHTML = `<div class="msg msg-error">Impossible de charger les disponibilités.</div>`;
+    }
+};
+
 const renderSalles = (items) => {
     salleGrid.innerHTML = "";
 
@@ -272,7 +341,16 @@ const renderSalles = (items) => {
             <h3>${salle.nom}</h3>
             <div class="infos">${salle.batiment} · ${salle.capacite} places</div>
             <div class="infos">${(salle.equipements || []).join(", ") || "Aucun équipement listé"}</div>
+            <button type="button" class="btn btn-outline btn-dispo" style="width:100%;">Voir les disponibilités</button>
         `;
+
+        // Visible pour tout le monde, y compris les étudiants simples qui ne
+        // peuvent pas réserver mais doivent pouvoir consulter l'occupation.
+        carte.querySelector(".btn-dispo").addEventListener("click", (event) => {
+            event.stopPropagation();
+            ouvrirDisponibilites(salle);
+        });
+
         if (peutReserver()) {
             carte.addEventListener("click", () => {
                 salleSelect.value = salle.id;
@@ -296,12 +374,6 @@ const appliquerFiltresSalles = () => {
     renderSalles(resultats);
 };
 
-const badgeClasse = (statut) => {
-    if (statut === "validee") return "badge-validee";
-    if (statut === "refusee") return "badge-refusee";
-    return "badge-attente";
-};
-
 const renderMesReservations = () => {
     mesReservationsList.innerHTML = "";
 
@@ -321,6 +393,7 @@ const renderMesReservations = () => {
                 <span class="badge ${badgeClasse(reservation.statut)}">${reservation.statut.replace("_", " ")}</span>
             </div>
             <div class="actions">
+                ${reservation.statut === "en_attente" ? `<button class="btn btn-outline modifierBtn" data-id="${reservation.id}">Modifier</button>` : ""}
                 ${reservation.statut !== "refusee" ? `<button class="btn btn-danger annulerBtn" data-id="${reservation.id}">Annuler</button>` : ""}
             </div>
         `;
@@ -329,6 +402,13 @@ const renderMesReservations = () => {
 
     document.querySelectorAll(".annulerBtn").forEach((btn) => {
         btn.addEventListener("click", () => annulerReservation(btn.dataset.id));
+    });
+
+    document.querySelectorAll(".modifierBtn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const reservation = mesReservations.find((r) => r.id === btn.dataset.id);
+            if (reservation) ouvrirModifierModal(reservation);
+        });
     });
 };
 
@@ -402,6 +482,63 @@ const annulerReservation = async (id) => {
         alert("Impossible d'annuler la réservation.");
     }
 };
+
+// ---------- Modale : modification d'une réservation en attente ----------
+const fermerModifierModal = () => {
+    modifierModal.classList.add("hidden");
+    reservationEnCoursDeModif = null;
+};
+
+modifierModalClose.addEventListener("click", fermerModifierModal);
+modifierModal.addEventListener("click", (event) => {
+    if (event.target === modifierModal) fermerModifierModal();
+});
+
+const ouvrirModifierModal = (reservation) => {
+    reservationEnCoursDeModif = reservation;
+    modifierMsg.classList.add("hidden");
+    modifierEffectif.value = reservation.effectif || "";
+    modifierDate.value = reservation.date_reservation;
+    modifierHeureDebut.value = reservation.heure_debut.slice(0, 5);
+    modifierHeureFin.value = reservation.heure_fin.slice(0, 5);
+    modifierMotif.value = reservation.motif;
+    modifierModal.classList.remove("hidden");
+};
+
+modifierForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!reservationEnCoursDeModif) return;
+
+    const body = {
+        date: modifierDate.value,
+        heureDebut: modifierHeureDebut.value,
+        heureFin: modifierHeureFin.value,
+        motif: modifierMotif.value.trim(),
+        effectif: modifierEffectif.value ? Number(modifierEffectif.value) : null
+    };
+
+    try {
+        const response = await authFetch(`${API_URL}/reservations/${reservationEnCoursDeModif.id}`, {
+            method: "PATCH",
+            body: JSON.stringify(body)
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            modifierMsg.textContent = data.message || "Impossible de modifier la réservation.";
+            modifierMsg.className = "msg msg-error";
+            modifierMsg.classList.remove("hidden");
+            return;
+        }
+
+        fermerModifierModal();
+        chargerDonnees();
+    } catch (error) {
+        modifierMsg.textContent = "Erreur de connexion au serveur.";
+        modifierMsg.className = "msg msg-error";
+        modifierMsg.classList.remove("hidden");
+    }
+});
 
 // ---------- Filtres ----------
 searchInput.addEventListener("input", appliquerFiltresSalles);
