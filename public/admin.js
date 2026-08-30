@@ -19,8 +19,11 @@ const salleForm = document.querySelector("#salleForm");
 const salleMsg = document.querySelector("#salleMsg");
 const salleAdminList = document.querySelector("#salleAdminList");
 
+const occupationList = document.querySelector("#occupationList");
+
 let reservations = [];
 let salles = [];
+let statsSalles = [];
 let currentUser = null;
 
 const getToken = () => localStorage.getItem("salleo_token");
@@ -105,14 +108,17 @@ const afficherApp = () => {
 
 const chargerDonnees = async () => {
     try {
-        const [resReservations, resSalles] = await Promise.all([
+        const [resReservations, resSalles, resStats] = await Promise.all([
             authFetch(`${API_URL}/reservations`),
-            authFetch(`${API_URL}/salles`)
+            authFetch(`${API_URL}/salles`),
+            authFetch(`${API_URL}/reservations/stats/salles`)
         ]);
         reservations = await resReservations.json();
         salles = await resSalles.json();
+        statsSalles = await resStats.json();
         appliquerFiltre();
         renderSallesAdmin();
+        renderOccupation();
         updateStatistiques();
     } catch (error) {
         console.error(error);
@@ -204,6 +210,34 @@ const renderSallesAdmin = () => {
         `;
         ligne.querySelector(".supprimerBtn").addEventListener("click", () => supprimerSalle(salle.id));
         salleAdminList.appendChild(ligne);
+    });
+};
+
+const renderOccupation = () => {
+    occupationList.innerHTML = "";
+
+    if (statsSalles.length === 0) {
+        occupationList.innerHTML = `<div class="empty-state">Aucune donnée disponible.</div>`;
+        return;
+    }
+
+    const maxHeures = Math.max(...statsSalles.map((s) => Number(s.heures_reservees)), 1);
+
+    statsSalles.forEach((salle) => {
+        const heures = Number(salle.heures_reservees);
+        const pourcentage = Math.round((heures / maxHeures) * 100);
+        const ligne = document.createElement("div");
+        ligne.className = "occupation-row";
+        ligne.innerHTML = `
+            <div class="occupation-header">
+                <strong>${salle.nom}</strong>
+                <span>${salle.reservations_validees} réservation(s) · ${heures.toFixed(1)}h</span>
+            </div>
+            <div class="occupation-bar">
+                <div class="occupation-fill" style="width:${pourcentage}%;"></div>
+            </div>
+        `;
+        occupationList.appendChild(ligne);
     });
 };
 

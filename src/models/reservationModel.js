@@ -82,6 +82,53 @@ const createReservation = async ({ salleId, userId, date, heureDebut, heureFin, 
     return rows[0];
 };
 
+const updateReservation = async (id, { date, heureDebut, heureFin, motif, effectif }) => {
+    const query = `
+        UPDATE reservations
+        SET date_reservation = $1, heure_debut = $2, heure_fin = $3, motif = $4, effectif = $5
+        WHERE id = $6
+        RETURNING *
+    `;
+    const { rows } = await pool.query(query, [date, heureDebut, heureFin, motif, effectif || null, id]);
+    return rows[0];
+};
+
+// Créneaux occupés (à venir) pour une salle donnée — vue accessible à tout
+// utilisateur connecté (étudiants inclus), sans exposer motif ni identité du demandeur.
+const getCreneauxOccupesBySalle = async (salleId) => {
+    const query = `
+        SELECT date_reservation, heure_debut, heure_fin, statut
+        FROM reservations
+        WHERE salle_id = $1
+          AND statut != 'refusee'
+          AND date_reservation >= CURRENT_DATE
+        ORDER BY date_reservation ASC, heure_debut ASC
+    `;
+    const { rows } = await pool.query(query, [salleId]);
+    return rows;
+};
+
+// Statistiques d'occupation par salle (réservations validées), pour le
+// tableau de bord des gestionnaires.
+const getStatsParSalle = async () => {
+    const query = `
+        SELECT
+            s.id,
+            s.nom,
+            s.batiment,
+            s.capacite,
+            COUNT(r.id) FILTER (WHERE r.statut = 'validee') AS reservations_validees,
+            COALESCE(SUM(EXTRACT(EPOCH FROM (r.heure_fin - r.heure_debut)) / 3600) FILTER (WHERE r.statut = 'validee'), 0) AS heures_reservees
+        FROM salles s
+        LEFT JOIN reservations r ON r.salle_id = s.id
+        WHERE s.active = true
+        GROUP BY s.id, s.nom, s.batiment, s.capacite
+        ORDER BY heures_reservees DESC
+    `;
+    const { rows } = await pool.query(query);
+    return rows;
+};
+
 const updateStatutReservation = async (id, statut) => {
     const query = `
         UPDATE reservations
@@ -106,6 +153,9 @@ module.exports = {
     getReservationById,
     existeConflit,
     createReservation,
+    updateReservation,
+    getCreneauxOccupesBySalle,
+    getStatsParSalle,
     updateStatutReservation,
     deleteReservation
 };

@@ -5,6 +5,9 @@ const {
     getReservationById,
     existeConflit,
     createReservation,
+    updateReservation,
+    getCreneauxOccupesBySalle,
+    getStatsParSalle,
     updateStatutReservation,
     deleteReservation
 } = require("../models/reservationModel");
@@ -46,6 +49,33 @@ const reservationsDeMonDepartement = async (req, res, next) => {
 
         const reservations = await getReservationsByDepartement(utilisateur.departement);
         res.status(200).json({ departement: utilisateur.departement, reservations });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Créneaux occupés d'une salle — accessible à tout utilisateur connecté
+// (y compris un étudiant simple qui ne peut pas réserver), sans exposer
+// le motif ni l'identité du demandeur.
+const creneauxOccupesSalle = async (req, res, next) => {
+    try {
+        const salle = await getSalleById(req.params.salleId);
+        if (!salle) {
+            return res.status(404).json({ message: "Salle introuvable." });
+        }
+
+        const creneaux = await getCreneauxOccupesBySalle(req.params.salleId);
+        res.status(200).json(creneaux);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Tableau de bord statistique — réservé aux gestionnaires (administratif / admin).
+const statistiquesSalles = async (req, res, next) => {
+    try {
+        const stats = await getStatsParSalle();
+        res.status(200).json(stats);
     } catch (error) {
         next(error);
     }
@@ -108,6 +138,67 @@ const creerReservation = async (req, res, next) => {
         });
 
         res.status(201).json(reservation);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Modification d'une réservation par son propriétaire, uniquement tant
+// qu'elle est "en_attente" (une réservation déjà validée ou refusée ne
+// peut pas être modifiée : il faut l'annuler et en recréer une autre).
+const modifierReservation = async (req, res, next) => {
+    try {
+        const reservation = await getReservationById(req.params.id);
+        if (!reservation) {
+            return res.status(404).json({ message: "Réservation introuvable." });
+        }
+
+        if (reservation.user_id !== req.user.id) {
+            return res.status(403).json({ message: "Tu ne peux modifier que tes propres réservations." });
+        }
+
+        if (reservation.statut !== "en_attente") {
+            return res.status(400).json({ message: "Seules les réservations en attente peuvent être modifiées." });
+        }
+
+        const { date, heureDebut, heureFin, motif, effectif } = req.body;
+
+        if (!date || !heureDebut || !heureFin || !motif) {
+            return res.status(400).json({ message: "Tous les champs sont obligatoires." });
+        }
+
+        if (heureFin <= heureDebut) {
+            return res.status(400).json({ message: "L'heure de fin doit être après l'heure de début." });
+        }
+
+        const aujourdhui = new Date().toISOString().slice(0, 10);
+        if (date < aujourdhui) {
+            return res.status(400).json({ message: "Impossible de réserver une date passée." });
+        }
+
+        if (effectif !== undefined && effectif !== null && effectif !== "" && Number(effectif) <= 0) {
+            return res.status(400).json({ message: "L'effectif doit être supérieur à 0." });
+        }
+
+        const salle = await getSalleById(reservation.salle_id);
+        if (effectif && Number(effectif) > salle.capacite) {
+            return res.status(400).json({ message: `Cette salle ne peut accueillir que ${salle.capacite} personnes.` });
+        }
+
+        const conflit = await existeConflit(reservation.salle_id, date, heureDebut, heureFin, reservation.id);
+        if (conflit) {
+            return res.status(409).json({ message: "Ce créneau est déjà réservé pour cette salle." });
+        }
+
+        const reservationMaj = await updateReservation(req.params.id, {
+            date,
+            heureDebut,
+            heureFin,
+            motif,
+            effectif: effectif ? Number(effectif) : null
+        });
+
+        res.status(200).json(reservationMaj);
     } catch (error) {
         next(error);
     }
@@ -179,7 +270,10 @@ module.exports = {
     listerReservations,
     mesReservations,
     reservationsDeMonDepartement,
+    creneauxOccupesSalle,
+    statistiquesSalles,
     creerReservation,
+    modifierReservation,
     validerReservation,
     refuserReservation,
     annulerReservation
