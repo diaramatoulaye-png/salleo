@@ -10,6 +10,11 @@ const tabRegister = document.querySelector("#tabRegister");
 const loginForm = document.querySelector("#loginForm");
 const registerForm = document.querySelector("#registerForm");
 
+const registerRole = document.querySelector("#registerRole");
+const registerEstResponsable = document.querySelector("#registerEstResponsable");
+const responsableClasseField = document.querySelector("#responsableClasseField");
+const classeField = document.querySelector("#classeField");
+
 const userNom = document.querySelector("#userNom");
 const logoutBtn = document.querySelector("#logoutBtn");
 
@@ -17,6 +22,10 @@ const statDispo = document.querySelector("#statDispo");
 const statAttente = document.querySelector("#statAttente");
 const statValidees = document.querySelector("#statValidees");
 
+const pasAutoriseMsg = document.querySelector("#pasAutoriseMsg");
+const reservationFormWrapper = document.querySelector("#reservationFormWrapper");
+
+const effectifInput = document.querySelector("#effectifInput");
 const salleSelect = document.querySelector("#salleSelect");
 const reservationForm = document.querySelector("#reservationForm");
 const formMsg = document.querySelector("#formMsg");
@@ -76,6 +85,22 @@ tabRegister.addEventListener("click", () => {
     authMsg.classList.add("hidden");
 });
 
+const majVisibiliteResponsableClasse = () => {
+    if (registerRole.value === "etudiant") {
+        responsableClasseField.classList.remove("hidden");
+    } else {
+        responsableClasseField.classList.add("hidden");
+        registerEstResponsable.checked = false;
+        classeField.classList.add("hidden");
+    }
+};
+
+registerRole.addEventListener("change", majVisibiliteResponsableClasse);
+registerEstResponsable.addEventListener("change", () => {
+    classeField.classList.toggle("hidden", !registerEstResponsable.checked);
+});
+majVisibiliteResponsableClasse();
+
 const showAuthMsg = (texte, type) => {
     authMsg.textContent = texte;
     authMsg.className = `msg ${type === "error" ? "msg-error" : "msg-success"}`;
@@ -115,14 +140,16 @@ registerForm.addEventListener("submit", async (event) => {
     const nom = document.querySelector("#registerNom").value.trim();
     const email = document.querySelector("#registerEmail").value.trim();
     const motDePasse = document.querySelector("#registerPassword").value;
-    const role = document.querySelector("#registerRole").value;
+    const role = registerRole.value;
     const departement = document.querySelector("#registerDepartement").value.trim();
+    const estResponsableClasse = registerEstResponsable.checked;
+    const classe = document.querySelector("#registerClasse").value.trim();
 
     try {
         const response = await fetch(`${API_URL}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nom, email, motDePasse, role, departement })
+            body: JSON.stringify({ nom, email, motDePasse, role, departement, estResponsableClasse, classe })
         });
         const data = await response.json();
 
@@ -152,10 +179,26 @@ const afficherAuth = () => {
     appScreen.classList.add("hidden");
 };
 
+// Seuls enseignant et étudiant-responsable-de-classe peuvent réserver
+const peutReserver = () => {
+    return currentUser.role === "enseignant" ||
+        (currentUser.role === "etudiant" && currentUser.est_responsable_classe);
+};
+
 const afficherApp = () => {
     authScreen.classList.add("hidden");
     appScreen.classList.remove("hidden");
-    userNom.textContent = `${currentUser.nom} · ${currentUser.role}`;
+    const badgeResponsable = currentUser.est_responsable_classe ? " · Responsable de classe" : "";
+    userNom.textContent = `${currentUser.nom} · ${currentUser.role}${badgeResponsable}`;
+
+    if (peutReserver()) {
+        pasAutoriseMsg.classList.add("hidden");
+        reservationFormWrapper.classList.remove("hidden");
+    } else {
+        pasAutoriseMsg.classList.remove("hidden");
+        reservationFormWrapper.classList.add("hidden");
+    }
+
     chargerDonnees();
 };
 
@@ -178,12 +221,38 @@ const chargerDonnees = async () => {
     }
 };
 
+// ---------- Suggestion intelligente de salle ----------
 const renderSalleSelect = () => {
+    const effectif = Number(effectifInput.value) || 0;
+    const valeurActuelle = salleSelect.value;
+
+    let sallesTriees = [...salles];
+
+    if (effectif > 0) {
+        sallesTriees.sort((a, b) => {
+            const aConvient = a.capacite >= effectif;
+            const bConvient = b.capacite >= effectif;
+            if (aConvient && !bConvient) return -1;
+            if (!aConvient && bConvient) return 1;
+            if (aConvient && bConvient) return a.capacite - b.capacite;
+            return b.capacite - a.capacite;
+        });
+    }
+
     salleSelect.innerHTML = "";
-    salles.forEach((salle) => {
-        salleSelect.innerHTML += `<option value="${salle.id}">${salle.nom} (${salle.capacite} places)</option>`;
+    sallesTriees.forEach((salle, index) => {
+        const estRecommandee = effectif > 0 && index === 0 && salle.capacite >= effectif;
+        const insuffisante = effectif > 0 && salle.capacite < effectif;
+        const label = `${estRecommandee ? "★ Recommandée — " : ""}${salle.nom} (${salle.capacite} places)${insuffisante ? " — capacité insuffisante" : ""}`;
+        salleSelect.innerHTML += `<option value="${salle.id}" ${insuffisante ? "disabled" : ""}>${label}</option>`;
     });
+
+    if (valeurActuelle && salles.some((s) => s.id === valeurActuelle)) {
+        salleSelect.value = valeurActuelle;
+    }
 };
+
+effectifInput.addEventListener("input", renderSalleSelect);
 
 const formatType = (type) => type.replaceAll("_", " ").replace(/^./, (l) => l.toUpperCase());
 
@@ -204,10 +273,12 @@ const renderSalles = (items) => {
             <div class="infos">${salle.batiment} · ${salle.capacite} places</div>
             <div class="infos">${(salle.equipements || []).join(", ") || "Aucun équipement listé"}</div>
         `;
-        carte.addEventListener("click", () => {
-            salleSelect.value = salle.id;
-            reservationForm.scrollIntoView({ behavior: "smooth", block: "center" });
-        });
+        if (peutReserver()) {
+            carte.addEventListener("click", () => {
+                salleSelect.value = salle.id;
+                reservationForm.scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+        }
         salleGrid.appendChild(carte);
     });
 };
@@ -242,10 +313,11 @@ const renderMesReservations = () => {
     mesReservations.forEach((reservation) => {
         const ligne = document.createElement("div");
         ligne.className = "reservation-row";
+        const effectifTxt = reservation.effectif ? ` · ${reservation.effectif} participants` : "";
         ligne.innerHTML = `
             <div>
                 <strong>${reservation.salle_nom}</strong>
-                <div class="details">${reservation.date_reservation} · ${reservation.heure_debut.slice(0,5)}-${reservation.heure_fin.slice(0,5)} · ${reservation.motif}</div>
+                <div class="details">${reservation.date_reservation} · ${reservation.heure_debut.slice(0,5)}-${reservation.heure_fin.slice(0,5)}${effectifTxt} · ${reservation.motif}</div>
                 <span class="badge ${badgeClasse(reservation.statut)}">${reservation.statut.replace("_", " ")}</span>
             </div>
             <div class="actions">
@@ -296,7 +368,8 @@ reservationForm.addEventListener("submit", async (event) => {
         date: document.querySelector("#dateInput").value,
         heureDebut: document.querySelector("#heureDebutInput").value,
         heureFin: document.querySelector("#heureFinInput").value,
-        motif: document.querySelector("#motifInput").value.trim()
+        motif: document.querySelector("#motifInput").value.trim(),
+        effectif: effectifInput.value ? Number(effectifInput.value) : null
     };
 
     try {
@@ -313,6 +386,7 @@ reservationForm.addEventListener("submit", async (event) => {
 
         showFormMsg("Demande envoyée ! En attente de validation.", "success");
         reservationForm.reset();
+        renderSalleSelect();
         chargerDonnees();
     } catch (error) {
         showFormMsg("Erreur de connexion au serveur.", "error");

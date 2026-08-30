@@ -57,6 +57,23 @@
                 <label>Département / Filière</label>
                 <input type="text" id="registerDepartement" required placeholder="Ex: DSTI - Ingénierie Informatique">
             </div>
+
+            <div class="field" id="responsableClasseField">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600; cursor:pointer;">
+                    <input type="checkbox" id="registerEstResponsable" style="width:auto;">
+                    Je suis responsable de ma classe
+                </label>
+            </div>
+
+            <div class="field hidden" id="classeField">
+                <label>Nom de la classe</label>
+                <input type="text" id="registerClasse" placeholder="Ex: L3 DSTI ASR">
+            </div>
+
+            <p style="font-size:12px; color:var(--muted); margin:-6px 0 14px 0;">
+                Seuls les enseignants et les responsables de classe peuvent réserver une salle.
+            </p>
+
             <button type="submit" class="btn btn-primary">Créer mon compte</button>
         </form>
     </div>
@@ -69,7 +86,7 @@
             <div>
                 <p class="eyebrow">UAM · Diamniadio</p>
                 <h1>SALLEO</h1>
-                <p>Réservation des salles de l'université</p>
+                <p>Réserver une salle de cours, sans tourner en rond.</p>
             </div>
             <div class="user-badge">
                 <span id="userNom"></span>
@@ -97,32 +114,46 @@
         <div class="layout">
             <div class="panel">
                 <h2>Réserver une salle</h2>
-                <p id="formMsg" class="msg hidden"></p>
-                <form id="reservationForm">
-                    <div class="field">
-                        <label>Salle</label>
-                        <select id="salleSelect" required></select>
-                    </div>
-                    <div class="field">
-                        <label>Date</label>
-                        <input type="date" id="dateInput" required>
-                    </div>
-                    <div class="field" style="display:flex; gap:10px;">
-                        <div style="flex:1;">
-                            <label>Début</label>
-                            <input type="time" id="heureDebutInput" required>
+
+                <!-- Visible uniquement si l'utilisateur n'a pas le droit de réserver -->
+                <div id="pasAutoriseMsg" class="msg msg-error hidden">
+                    Seuls les enseignants et les responsables de classe peuvent réserver une salle.
+                    Rapproche-toi du responsable de ta classe si tu as besoin d'une salle.
+                </div>
+
+                <div id="reservationFormWrapper">
+                    <p id="formMsg" class="msg hidden"></p>
+                    <form id="reservationForm">
+                        <div class="field">
+                            <label>Effectif (nombre de participants)</label>
+                            <input type="number" id="effectifInput" min="1" placeholder="Ex: 45">
+                            <p style="font-size:11px; color:var(--muted); margin:4px 0 0 0;">Renseigne l'effectif pour voir la salle recommandée en premier.</p>
                         </div>
-                        <div style="flex:1;">
-                            <label>Fin</label>
-                            <input type="time" id="heureFinInput" required>
+                        <div class="field">
+                            <label>Salle</label>
+                            <select id="salleSelect" required></select>
                         </div>
-                    </div>
-                    <div class="field">
-                        <label>Motif</label>
-                        <input type="text" id="motifInput" required placeholder="Réunion de groupe">
-                    </div>
-                    <button type="submit" class="btn btn-gold" style="width:100%;">Envoyer la demande</button>
-                </form>
+                        <div class="field">
+                            <label>Date</label>
+                            <input type="date" id="dateInput" required>
+                        </div>
+                        <div class="field" style="display:flex; gap:10px;">
+                            <div style="flex:1;">
+                                <label>Début</label>
+                                <input type="time" id="heureDebutInput" required>
+                            </div>
+                            <div style="flex:1;">
+                                <label>Fin</label>
+                                <input type="time" id="heureFinInput" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Motif</label>
+                            <input type="text" id="motifInput" required placeholder="Réunion de groupe">
+                        </div>
+                        <button type="submit" class="btn btn-gold" style="width:100%;">Envoyer la demande</button>
+                    </form>
+                </div>
             </div>
 
             <div class="panel">

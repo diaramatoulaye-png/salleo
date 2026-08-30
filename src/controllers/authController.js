@@ -4,8 +4,14 @@ require("dotenv").config();
 
 const { createUser, findUserByEmail, findUserById } = require("../models/userModel");
 
+// Le payload embarque le rôle ET le statut de responsable de classe,
+// pour que les contrôleurs puissent vérifier les droits sans requête DB supplémentaire.
 const genererTokens = (user) => {
-    const payload = { id: user.id, role: user.role };
+    const payload = {
+        id: user.id,
+        role: user.role,
+        est_responsable_classe: user.est_responsable_classe || false
+    };
 
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN
@@ -20,14 +26,12 @@ const genererTokens = (user) => {
 
 const register = async (req, res, next) => {
     try {
-        const { nom, email, motDePasse, role, departement } = req.body;
+        const { nom, email, motDePasse, role, departement, classe, estResponsableClasse } = req.body;
 
         if (!nom || !email || !motDePasse || !role) {
             return res.status(400).json({ message: "Tous les champs sont obligatoires." });
         }
 
-        // Inscription publique réservée aux étudiants et enseignants.
-        // administratif, responsable_departement et admin sont créés directement en base (src/db/seedAdmin.js).
         const rolesValides = ["etudiant", "enseignant"];
         if (!rolesValides.includes(role)) {
             return res.status(400).json({ message: "Rôle invalide." });
@@ -35,6 +39,10 @@ const register = async (req, res, next) => {
 
         if (!departement || !departement.trim()) {
             return res.status(400).json({ message: "Le département / filière est obligatoire." });
+        }
+
+        if (role === "etudiant" && estResponsableClasse && (!classe || !classe.trim())) {
+            return res.status(400).json({ message: "Le nom de la classe est obligatoire pour un responsable de classe." });
         }
 
         const utilisateurExistant = await findUserByEmail(email);
@@ -48,7 +56,9 @@ const register = async (req, res, next) => {
             email,
             motDePasseHash,
             role,
-            departement: departement.trim()
+            departement: departement.trim(),
+            classe: role === "etudiant" ? (classe || "").trim() || null : null,
+            estResponsableClasse: role === "etudiant" ? Boolean(estResponsableClasse) : false
         });
 
         const { accessToken, refreshToken } = genererTokens(nouvelUtilisateur);
@@ -85,7 +95,9 @@ const login = async (req, res, next) => {
                 nom: utilisateur.nom,
                 email: utilisateur.email,
                 role: utilisateur.role,
-                departement: utilisateur.departement
+                departement: utilisateur.departement,
+                classe: utilisateur.classe,
+                est_responsable_classe: utilisateur.est_responsable_classe
             },
             accessToken,
             refreshToken

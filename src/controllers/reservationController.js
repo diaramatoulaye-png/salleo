@@ -36,7 +36,6 @@ const mesReservations = async (req, res, next) => {
     }
 };
 
-// Réservé au rôle responsable_departement : vue en lecture seule de son propre département
 const reservationsDeMonDepartement = async (req, res, next) => {
     try {
         const utilisateur = await findUserById(req.user.id);
@@ -54,7 +53,18 @@ const reservationsDeMonDepartement = async (req, res, next) => {
 
 const creerReservation = async (req, res, next) => {
     try {
-        const { salleId, date, heureDebut, heureFin, motif } = req.body;
+        // Seuls les enseignants et les étudiants marqués "responsable de classe"
+        // peuvent créer une réservation. Un étudiant simple ne peut pas.
+        const { role, est_responsable_classe: estResponsableClasse } = req.user;
+        const peutReserver = role === "enseignant" || (role === "etudiant" && estResponsableClasse);
+
+        if (!peutReserver) {
+            return res.status(403).json({
+                message: "Seuls les enseignants et les responsables de classe peuvent réserver une salle."
+            });
+        }
+
+        const { salleId, date, heureDebut, heureFin, motif, effectif } = req.body;
 
         if (!salleId || !date || !heureDebut || !heureFin || !motif) {
             return res.status(400).json({ message: "Tous les champs sont obligatoires." });
@@ -69,9 +79,17 @@ const creerReservation = async (req, res, next) => {
             return res.status(400).json({ message: "Impossible de réserver une date passée." });
         }
 
+        if (effectif !== undefined && effectif !== null && effectif !== "" && Number(effectif) <= 0) {
+            return res.status(400).json({ message: "L'effectif doit être supérieur à 0." });
+        }
+
         const salle = await getSalleById(salleId);
         if (!salle || !salle.active) {
             return res.status(404).json({ message: "Salle introuvable." });
+        }
+
+        if (effectif && Number(effectif) > salle.capacite) {
+            return res.status(400).json({ message: `Cette salle ne peut accueillir que ${salle.capacite} personnes.` });
         }
 
         const conflit = await existeConflit(salleId, date, heureDebut, heureFin);
@@ -85,7 +103,8 @@ const creerReservation = async (req, res, next) => {
             date,
             heureDebut,
             heureFin,
-            motif
+            motif,
+            effectif: effectif ? Number(effectif) : null
         });
 
         res.status(201).json(reservation);
@@ -133,6 +152,8 @@ const refuserReservation = async (req, res, next) => {
     }
 };
 
+// Annulation : le propriétaire de la réservation, ou l'administration
+// (administratif / admin), peut annuler — à tout moment, quel que soit le statut.
 const annulerReservation = async (req, res, next) => {
     try {
         const reservation = await getReservationById(req.params.id);
@@ -141,9 +162,9 @@ const annulerReservation = async (req, res, next) => {
         }
 
         const estProprietaire = reservation.user_id === req.user.id;
-        const estAdmin = req.user.role === "admin";
+        const estGestionnaire = ["admin", "administratif"].includes(req.user.role);
 
-        if (!estProprietaire && !estAdmin) {
+        if (!estProprietaire && !estGestionnaire) {
             return res.status(403).json({ message: "Vous ne pouvez annuler que vos propres réservations." });
         }
 
