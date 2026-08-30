@@ -32,6 +32,10 @@ const register = async (req, res, next) => {
             return res.status(400).json({ message: "Tous les champs sont obligatoires." });
         }
 
+        if (motDePasse.length < 8) {
+            return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères." });
+        }
+
         const rolesValides = ["etudiant", "enseignant"];
         if (!rolesValides.includes(role)) {
             return res.status(400).json({ message: "Rôle invalide." });

@@ -44,7 +44,7 @@
             </div>
             <div class="field">
                 <label>Mot de passe</label>
-                <input type="password" id="registerPassword" required minlength="4">
+                <input type="password" id="registerPassword" required minlength="8">
             </div>
             <div class="field">
                 <label>Statut</label>
@@ -182,53 +182,6 @@
             </div>
         </div>
     </main>
-</div>
-
-<!-- MODALE : créneaux occupés d'une salle (visible par tous, y compris étudiant simple) -->
-<div id="dispoModal" class="modal-overlay hidden">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h3 id="dispoModalTitle">Créneaux occupés</h3>
-            <button type="button" id="dispoModalClose" class="modal-close">&times;</button>
-        </div>
-        <div id="dispoModalContent"></div>
-    </div>
-</div>
-
-<!-- MODALE : modification d'une réservation en attente -->
-<div id="modifierModal" class="modal-overlay hidden">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h3>Modifier la réservation</h3>
-            <button type="button" id="modifierModalClose" class="modal-close">&times;</button>
-        </div>
-        <p id="modifierMsg" class="msg hidden"></p>
-        <form id="modifierForm">
-            <div class="field">
-                <label>Effectif (nombre de participants)</label>
-                <input type="number" id="modifierEffectif" min="1" placeholder="Ex: 45">
-            </div>
-            <div class="field">
-                <label>Date</label>
-                <input type="date" id="modifierDate" required>
-            </div>
-            <div class="field" style="display:flex; gap:10px;">
-                <div style="flex:1;">
-                    <label>Début</label>
-                    <input type="time" id="modifierHeureDebut" required>
-                </div>
-                <div style="flex:1;">
-                    <label>Fin</label>
-                    <input type="time" id="modifierHeureFin" required>
-                </div>
-            </div>
-            <div class="field">
-                <label>Motif</label>
-                <input type="text" id="modifierMotif" required>
-            </div>
-            <button type="submit" class="btn btn-gold" style="width:100%;">Enregistrer les modifications</button>
-        </form>
-    </div>
 </div>
 
 <script src="script.js"></script>

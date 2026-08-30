@@ -1,23 +1,189 @@
-const express = require("express");
-const router = express.Router();
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SALLEO — UAM</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
-const {
-    listerSalles,
-    obtenirSalle,
-    ajouterSalle,
-    modifierSalle,
-    supprimerSalle
-} = require("../controllers/salleController");
+<!-- ÉCRAN AUTHENTIFICATION -->
+<div id="authScreen" class="auth-wrapper">
+    <div class="auth-card">
+        <h1>SALLEO</h1>
+        <p class="subtitle">Réservation des salles — Université Amadou Mahtar Mbow</p>
 
-const { verifierToken, autoriserRoles } = require("../middlewares/auth");
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tabLogin">Connexion</button>
+            <button class="auth-tab" id="tabRegister">Inscription</button>
+        </div>
 
-// Consultation : accessible à tout utilisateur connecté
-router.get("/", verifierToken, listerSalles);
-router.get("/:id", verifierToken, obtenirSalle);
+        <p id="authMsg" class="msg hidden"></p>
 
-// Gestion du parc : réservée à l'administrateur
-router.post("/", verifierToken, autoriserRoles("admin"), ajouterSalle);
-router.put("/:id", verifierToken, autoriserRoles("admin"), modifierSalle);
-router.delete("/:id", verifierToken, autoriserRoles("admin"), supprimerSalle);
+        <form id="loginForm">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="loginEmail" required placeholder="prenom.nom@uam.sn">
+            </div>
+            <div class="field">
+                <label>Mot de passe</label>
+                <input type="password" id="loginPassword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </form>
 
-module.exports = router;
+        <form id="registerForm" class="hidden">
+            <div class="field">
+                <label>Nom complet</label>
+                <input type="text" id="registerNom" required placeholder="Ramatoulaye Dia">
+            </div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="registerEmail" required placeholder="prenom.nom@uam.sn">
+            </div>
+            <div class="field">
+                <label>Mot de passe</label>
+                <input type="password" id="registerPassword" required minlength="8">
+            </div>
+            <div class="field">
+                <label>Statut</label>
+                <select id="registerRole" required>
+                    <option value="etudiant">Étudiant</option>
+                    <option value="enseignant">Enseignant</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Département / Filière</label>
+                <input type="text" id="registerDepartement" required placeholder="Ex: DSTI - Ingénierie Informatique">
+            </div>
+
+            <div class="field" id="responsableClasseField">
+                <label style="display:flex; align-items:center; gap:8px; font-weight:600; cursor:pointer;">
+                    <input type="checkbox" id="registerEstResponsable" style="width:auto;">
+                    Je suis responsable de ma classe
+                </label>
+            </div>
+
+            <div class="field hidden" id="classeField">
+                <label>Nom de la classe</label>
+                <input type="text" id="registerClasse" placeholder="Ex: L3 DSTI ASR">
+            </div>
+
+            <p style="font-size:12px; color:var(--muted); margin:-6px 0 14px 0;">
+                Seuls les enseignants et les responsables de classe peuvent réserver une salle.
+            </p>
+
+            <button type="submit" class="btn btn-primary">Créer mon compte</button>
+        </form>
+    </div>
+</div>
+
+<!-- APPLICATION -->
+<div id="appScreen" class="hidden">
+    <header class="hero">
+        <div class="hero-inner">
+            <div>
+                <p class="eyebrow">UAM · Diamniadio</p>
+                <h1>SALLEO</h1>
+                <p>Réserver une salle de cours, sans tourner en rond.</p>
+            </div>
+            <div class="user-badge">
+                <span id="userNom"></span>
+                <button id="logoutBtn" class="btn btn-outline" style="background:white;">Déconnexion</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Salles disponibles</div>
+                <div class="value" id="statDispo">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Mes réservations en attente</div>
+                <div class="value" id="statAttente">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Mes réservations validées</div>
+                <div class="value" id="statValidees">0</div>
+            </div>
+        </section>
+
+        <div class="layout">
+            <div class="panel">
+                <h2>Réserver une salle</h2>
+
+                <!-- Visible uniquement si l'utilisateur n'a pas le droit de réserver -->
+                <div id="pasAutoriseMsg" class="msg msg-error hidden">
+                    Seuls les enseignants et les responsables de classe peuvent réserver une salle.
+                    Rapproche-toi du responsable de ta classe si tu as besoin d'une salle.
+                </div>
+
+                <div id="reservationFormWrapper">
+                    <p id="formMsg" class="msg hidden"></p>
+                    <form id="reservationForm">
+                        <div class="field">
+                            <label>Effectif (nombre de participants)</label>
+                            <input type="number" id="effectifInput" min="1" placeholder="Ex: 45">
+                            <p style="font-size:11px; color:var(--muted); margin:4px 0 0 0;">Renseigne l'effectif pour voir la salle recommandée en premier.</p>
+                        </div>
+                        <div class="field">
+                            <label>Salle</label>
+                            <select id="salleSelect" required></select>
+                        </div>
+                        <div class="field">
+                            <label>Date</label>
+                            <input type="date" id="dateInput" required>
+                        </div>
+                        <div class="field" style="display:flex; gap:10px;">
+                            <div style="flex:1;">
+                                <label>Début</label>
+                                <input type="time" id="heureDebutInput" required>
+                            </div>
+                            <div style="flex:1;">
+                                <label>Fin</label>
+                                <input type="time" id="heureFinInput" required>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Motif</label>
+                            <input type="text" id="motifInput" required placeholder="Réunion de groupe">
+                        </div>
+                        <button type="submit" class="btn btn-gold" style="width:100%;">Envoyer la demande</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="tabs">
+                    <button class="tab-btn active" id="tabSalles">Salles disponibles</button>
+                    <button class="tab-btn" id="tabMesReservations">Mes réservations</button>
+                </div>
+
+                <div id="sallesView">
+                    <div class="toolbar">
+                        <input type="search" id="searchInput" placeholder="Rechercher une salle...">
+                        <select id="typeFilter">
+                            <option value="all">Tous les types</option>
+                            <option value="salle_de_classe">Salle de classe</option>
+                            <option value="amphitheatre">Amphithéâtre</option>
+                            <option value="salle_de_reunion">Salle de réunion</option>
+                            <option value="laboratoire">Laboratoire</option>
+                        </select>
+                    </div>
+                    <div id="salleGrid" class="salle-grid"></div>
+                </div>
+
+                <div id="mesReservationsView" class="hidden">
+                    <div id="mesReservationsList"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
